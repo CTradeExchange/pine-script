@@ -1,0 +1,27 @@
+//@version=4
+strategy("Tesla Grid Trading Strategy", overlay=true)
+
+// Define parameters for the grid
+gridSize = input(title="Grid Size", type=input.float, defval=25.0)
+gridMax = input(title="Grid Maximum Price", type=input.float, defval=800.0)
+gridMin = input(title="Grid Minimum Price", type=input.float, defval=300.0)
+
+// Calculate the number of buy levels to create based on the grid size
+numLevels = round((gridMax - gridMin)/gridSize)
+buyLevels = array.new_float(numLevels, na)
+
+// Set the initial buy level at the grid minimum value
+array.set(buyLevels, 0, gridMin)
+
+// Loop through the remaining buy levels and set them at regular intervals
+for i = 1 to numLevels - 1
+prev = array.get(buyLevels, i-1)
+array.set(buyLevels, i, prev + gridSize)
+
+// Create a buy limit order for each buy level
+for i = 0 to numLevels - 1
+strategy.entry("Buy", strategy.long, qty=100, limit=array.get(buyLevels, i))
+
+// Create a stop loss strategy
+stopLoss = input(title="Stop Loss Level", type=input.float, defval=250.0)
+strategy.exit("Stop Loss", "Buy", stop = stopLoss)
